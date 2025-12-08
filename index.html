@@ -4,88 +4,506 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Windows 10 Game Hub</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* --- CSS STYLES --- */
+        :root {
+            --win-blue: #0078d7; /* This variable will be changed by JS */
+            --taskbar-bg: rgba(16, 16, 16, 0.95);
+            --start-bg: rgba(31, 31, 31, 0.95);
+            --hover-bg: rgba(255, 255, 255, 0.1);
+            --window-bg: #f0f0f0;
+        }
+
+        * { box-sizing: border-box; user-select: none; }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            background-color: #333;
+            /* Default Wallpaper */
+            background-image: url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80');
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: cover;
+            background-attachment: fixed;
+            color: white;
+            transition: background 0.5s;
+        }
+
+        /* --- LOCK SCREEN --- */
+        #lock-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: url('https://images.unsplash.com/photo-1477346611705-65d1883cee1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80') no-repeat center center fixed;
+            background-size: cover;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 0 0 100px 50px;
+            transition: transform 0.8s cubic-bezier(0.77, 0, 0.175, 1);
+            cursor: default;
+        }
+
+        #lock-screen.slide-up { transform: translateY(-100%); }
+        
+        #lock-time { font-size: 6rem; font-weight: 300; line-height: 1; }
+        #lock-date { font-size: 2.5rem; font-weight: 300; margin-bottom: 40px; }
+        .lock-hint { font-size: 1rem; opacity: 0.7; animation: blink 2s infinite; }
+        
+        @keyframes blink { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+        /* --- DESKTOP AREA --- */
+        .desktop {
+            height: calc(100vh - 40px);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-content: flex-start;
+            flex-wrap: wrap;
+            position: relative;
+        }
+
+        .desktop-icon {
+            width: 80px; height: 90px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            border: 1px solid transparent;
+            margin-bottom: 10px;
+            cursor: pointer;
+            text-shadow: 0 0 4px rgba(0,0,0,0.8);
+        }
+        .desktop-icon:hover { background: var(--hover-bg); border: 1px solid rgba(255,255,255,0.2); }
+        .desktop-icon i { font-size: 2rem; margin-bottom: 8px; color: #4dcfff; }
+        .desktop-icon span { font-size: 0.8rem; text-align: center; line-height: 1.2; }
+
+        /* --- WINDOW SYSTEM --- */
+        .window {
+            position: absolute;
+            top: 10%; left: 15%;
+            width: 800px; height: 500px;
+            background: var(--window-bg);
+            color: #000;
+            border: 1px solid #0078d7;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column;
+            animation: openWindow 0.2s ease-out;
+            resize: both; overflow: hidden;
+            min-width: 300px; min-height: 200px;
+        }
+
+        @keyframes openWindow { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .title-bar {
+            background: #fff;
+            height: 30px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 10px;
+            border-bottom: 1px solid #ccc;
+        }
+        
+        .window-title { font-size: 0.85rem; pointer-events: none; display: flex; align-items: center; gap: 8px;}
+        
+        .window-controls { display: flex; height: 100%; }
+        .control-btn { 
+            width: 40px; height: 100%; 
+            display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; transition: 0.2s;
+        }
+        .control-btn:hover { background: #eee; }
+        .control-btn.close:hover { background: #e81123; color: white; }
+
+        .window-body { flex-grow: 1; background: #fff; position: relative; overflow: hidden; }
+        .window-body iframe { width: 100%; height: 100%; border: none; }
+        
+        /* BROWSER BAR STYLES */
+        .browser-bar {
+            display: flex; gap: 5px; padding: 5px; background: #f0f0f0; border-bottom: 1px solid #ccc;
+        }
+        .browser-input { flex-grow: 1; padding: 4px 10px; border: 1px solid #ccc; border-radius: 3px; }
+        .browser-btn { padding: 4px 10px; cursor: pointer; background: #e1e1e1; border: 1px solid #ccc; border-radius: 3px; }
+        .browser-btn:hover { background: #d1d1d1; }
+
+        /* SETTINGS APP STYLES */
+        .settings-container { display: flex; height: 100%; }
+        .settings-sidebar { width: 200px; background: #f0f0f0; padding: 20px; border-right: 1px solid #ccc; }
+        .settings-content { flex-grow: 1; padding: 30px; overflow-y: auto; background: white; }
+        .settings-header { font-size: 1.5rem; margin-bottom: 20px; }
+        .wallpaper-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+        .wallpaper-option { height: 80px; background-size: cover; cursor: pointer; border: 2px solid transparent; }
+        .wallpaper-option:hover { border: 2px solid var(--win-blue); }
+        .color-grid { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+        .color-option { width: 40px; height: 40px; cursor: pointer; border-radius: 50%; }
+
+        /* --- START MENU --- */
+        .start-menu {
+            position: fixed;
+            bottom: 40px; left: 0;
+            width: 600px; height: 550px;
+            background: var(--start-bg);
+            backdrop-filter: blur(15px);
+            display: flex;
+            transform: translateY(110%);
+            transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+            z-index: 900;
+            border-top: 1px solid #333;
+            border-right: 1px solid #333;
+        }
+        
+        .start-menu.active { transform: translateY(0); }
+
+        .sidebar {
+            width: 48px;
+            display: flex; flex-direction: column; justify-content: flex-end;
+            padding-bottom: 10px;
+        }
+        .side-btn { height: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .side-btn:hover { background: var(--hover-bg); }
+
+        .app-list { width: 220px; padding: 20px; overflow-y: auto; border-right: 1px solid rgba(255,255,255,0.1); }
+        .app-entry { 
+            padding: 8px 10px; display: flex; align-items: center; gap: 10px; 
+            cursor: pointer; font-size: 0.9rem;
+        }
+        .app-entry:hover { background: var(--hover-bg); }
+
+        .tile-grid { flex-grow: 1; padding: 20px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; align-content: start; }
+        .tile {
+            background: var(--win-blue);
+            height: 100px; padding: 10px;
+            display: flex; flex-direction: column; justify-content: flex-end;
+            cursor: pointer; position: relative; border: 2px solid transparent;
+        }
+        .tile:hover { border: 2px solid rgba(255,255,255,0.4); }
+        .tile i { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2rem; }
+        .tile span { font-size: 0.8rem; }
+        
+        .tile.wide { grid-column: span 2; background: #2b2b2b; }
+
+        /* --- TASKBAR --- */
+        .taskbar {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 40px;
+            background: var(--taskbar-bg);
+            backdrop-filter: blur(10px);
+            display: flex; align-items: center;
+            z-index: 1000; border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .start-btn {
+            width: 48px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; cursor: pointer; transition: 0.2s;
+        }
+        .start-btn:hover { background: var(--hover-bg); color: var(--win-blue); }
+
+        .search-box {
+            width: 300px; height: 40px; background: #fff;
+            display: flex; align-items: center; padding-left: 15px;
+            color: #666; font-size: 0.9rem;
+        }
+
+        .pinned-apps {
+            display: flex; padding-left: 10px;
+        }
+        .taskbar-icon {
+            width: 44px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; cursor: pointer; color: white;
+            border-bottom: 2px solid transparent;
+        }
+        .taskbar-icon:hover { background: rgba(255,255,255,0.1); }
+        .taskbar-icon.active { border-bottom: 2px solid var(--win-blue); background: rgba(255,255,255,0.05); }
+        
+        .tray { margin-left: auto; display: flex; height: 100%; align-items: center; padding-right: 15px; font-size: 0.8rem; }
+        .tray-icon { padding: 0 8px; cursor: pointer; }
+        .clock { display: flex; flex-direction: column; align-items: center; padding: 0 10px; cursor: default; }
+    </style>
 </head>
 <body>
 
-    <div id="lock-screen" onclick="unlockScreen()">
-        <div class="lock-content">
-            <div id="lock-time">12:00</div>
-            <div id="lock-date">Monday, January 1</div>
-            <div class="lock-msg">Click anywhere to enter</div>
-        </div>
+    <!-- 1. LOCK SCREEN -->
+    <div id="lock-screen" onclick="unlockSystem()">
+        <div id="lock-time">12:00</div>
+        <div id="lock-date">Monday, January 1</div>
+        <div class="lock-hint">Click anywhere to unlock</div>
     </div>
 
-    <div class="desktop">
-        <div class="desktop-icon" onclick="openGame('game1')">
-            <i class="fa-solid fa-gamepad"></i>
-            <span>My RPG</span>
+    <!-- 2. DESKTOP -->
+    <div class="desktop" id="desktop-area">
+        <div class="desktop-icon" onclick="openGame('rpg')">
+            <i class="fa-solid fa-dragon"></i>
+            <span>RPG Adventure</span>
         </div>
-        <div class="desktop-icon" onclick="openGame('game2')">
-            <i class="fa-solid fa-ghost"></i>
-            <span>Horror Sim</span>
+        <div class="desktop-icon" onclick="openGame('racer')">
+            <i class="fa-solid fa-car-side"></i>
+            <span>Street Racer</span>
         </div>
-        <div class="desktop-icon" onclick="openWindow('trash')">
-            <i class="fa-solid fa-trash-can"></i>
+        <div class="desktop-icon" onclick="openBrowser()">
+            <i class="fa-brands fa-edge"></i>
+            <span>Microsoft Edge</span>
+        </div>
+        <div class="desktop-icon" onclick="openSettings()">
+            <i class="fa-solid fa-gear" style="color:#999;"></i>
+            <span>Settings</span>
+        </div>
+        <div class="desktop-icon">
+            <i class="fa-solid fa-trash-can" style="color:#ccc;"></i>
             <span>Recycle Bin</span>
         </div>
-
-        <div id="window-area"></div>
     </div>
 
-    <div id="start-menu" class="start-menu hidden">
+    <!-- 3. START MENU -->
+    <div id="start-menu" class="start-menu">
         <div class="sidebar">
-            <div class="sidebar-btn"><i class="fa-solid fa-user"></i></div>
-            <div class="sidebar-btn"><i class="fa-solid fa-cog"></i></div>
-            <div class="sidebar-btn"><i class="fa-solid fa-power-off"></i></div>
+            <div class="side-btn"><i class="fa-regular fa-user"></i></div>
+            <div class="side-btn" onclick="openSettings()"><i class="fa-solid fa-gear"></i></div>
+            <div class="side-btn" onclick="location.reload()"><i class="fa-solid fa-power-off"></i></div>
         </div>
-        <div class="apps-list">
-            <h3>Installed Games</h3>
-            <div class="app-item" onclick="openGame('game1')"><i class="fa-solid fa-gamepad"></i> Super RPG</div>
-            <div class="app-item" onclick="openGame('game2')"><i class="fa-solid fa-ghost"></i> Spooky House</div>
-            <div class="app-item" onclick="openGame('game3')"><i class="fa-solid fa-car"></i> Racer X</div>
+        
+        <div class="app-list">
+            <p style="margin-top:0; font-weight:bold;">All Apps</p>
+            <div class="app-entry" onclick="openBrowser()"><i class="fa-brands fa-edge"></i> Edge Browser</div>
+            <div class="app-entry" onclick="openSettings()"><i class="fa-solid fa-gear"></i> Settings</div>
+            <div class="app-entry" onclick="openGame('rpg')"><i class="fa-solid fa-dragon"></i> RPG Adventure</div>
+            <div class="app-entry" onclick="openGame('fps')"><i class="fa-solid fa-crosshairs"></i> Zombie Shooter</div>
+            <div class="app-entry" onclick="openGame('racer')"><i class="fa-solid fa-car"></i> Street Racer</div>
         </div>
-        <div class="tiles-grid">
-            <h3>Play Now</h3>
-            <div class="tile medium color-1" onclick="openGame('game1')">
-                <i class="fa-solid fa-gamepad"></i>
-                <span>Super RPG</span>
+
+        <div class="tile-grid">
+            <div class="tile wide" onclick="openGame('rpg')">
+                <i class="fa-solid fa-dragon"></i>
+                <span>RPG Adventure</span>
             </div>
-            <div class="tile wide color-2" onclick="openGame('game2')">
-                <i class="fa-solid fa-ghost"></i>
-                <span>Spooky House</span>
+            <div class="tile" style="background:#0078d7;" onclick="openBrowser()">
+                <i class="fa-brands fa-edge"></i>
+                <span>Edge</span>
             </div>
-            <div class="tile small color-3" onclick="openGame('game3')">
+            <div class="tile" style="background:#e81123;" onclick="openGame('racer')">
                 <i class="fa-solid fa-car"></i>
-            </div>
-             <div class="tile small color-4">
-                <i class="fa-brands fa-xbox"></i>
+                <span>Racer</span>
             </div>
         </div>
     </div>
 
+    <!-- 4. TASKBAR -->
     <div class="taskbar">
-        <div class="start-btn" onclick="toggleStartMenu()">
+        <div class="start-btn" onclick="toggleStart()">
             <i class="fa-brands fa-windows"></i>
         </div>
-        <div class="search-bar">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <span>Type here to search</span>
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass" style="margin-right:10px;"></i> Type here to search
         </div>
-        <div class="taskbar-icons">
+        
+        <!-- PINNED APPS -->
+        <div class="pinned-apps">
+            <div class="taskbar-icon" onclick="openBrowser()" title="Edge Browser">
+                <i class="fa-brands fa-edge" style="color: #0078d7;"></i>
             </div>
+            <div class="taskbar-icon" onclick="alert('File Explorer coming soon!')" title="File Explorer">
+                <i class="fa-solid fa-folder" style="color: #e8b839;"></i>
+            </div>
+            <div class="taskbar-icon" onclick="alert('Store unavailable in demo.')" title="Store">
+                <i class="fa-brands fa-microsoft" style="color: white;"></i>
+            </div>
+            <div class="taskbar-icon" onclick="openSettings()" title="Settings">
+                <i class="fa-solid fa-gear" style="color: #ccc;"></i>
+            </div>
+        </div>
+
         <div class="tray">
-            <i class="fa-solid fa-wifi"></i>
-            <i class="fa-solid fa-volume-high"></i>
-            <div class="tray-clock">
-                <div id="tray-time">12:00 PM</div>
-                <div id="tray-date">1/1/2024</div>
+            <div class="tray-icon"><i class="fa-solid fa-wifi"></i></div>
+            <div class="tray-icon"><i class="fa-solid fa-volume-high"></i></div>
+            <div class="clock">
+                <span id="taskbar-time">12:00 PM</span>
+                <span id="taskbar-date">1/1/2024</span>
             </div>
-            <div class="notification-bell"><i class="fa-regular fa-comment-dots"></i></div>
+            <div class="tray-icon"><i class="fa-regular fa-comment-dots"></i></div>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        // --- 1. CONFIGURATION: GAMES ---
+        const games = {
+            'rpg': { title: 'RPG Adventure', url: 'games/rpg.html' },
+            'racer': { title: 'Street Racer', url: 'games/racer.html' },
+            'fps': { title: 'Zombie Shooter', url: 'games/shooter.html' }
+        };
+
+        // --- 2. CLOCK & SYSTEM LOGIC ---
+        function updateTime() {
+            const now = new Date();
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            
+            let h = now.getHours();
+            let m = now.getMinutes();
+            let ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12; h = h ? h : 12; 
+            m = m < 10 ? '0' + m : m;
+            
+            document.getElementById('lock-time').innerText = `${h}:${m}`;
+            document.getElementById('lock-date').innerText = `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}`;
+            document.getElementById('taskbar-time').innerText = `${h}:${m} ${ampm}`;
+            document.getElementById('taskbar-date').innerText = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        function unlockSystem() {
+            document.getElementById('lock-screen').classList.add('slide-up');
+        }
+
+        function toggleStart() {
+            document.getElementById('start-menu').classList.toggle('active');
+        }
+        
+        document.getElementById('desktop-area').addEventListener('click', (e) => {
+            if(e.target === document.getElementById('desktop-area')) {
+                document.getElementById('start-menu').classList.remove('active');
+            }
+        });
+
+        // --- 3. GENERIC WINDOW SYSTEM ---
+        let zIndexCounter = 100;
+
+        function createWindow(title, content, iconClass = 'fa-window-maximize') {
+            document.getElementById('start-menu').classList.remove('active');
+            
+            const desktop = document.getElementById('desktop-area');
+            const win = document.createElement('div');
+            win.classList.add('window');
+            win.style.zIndex = ++zIndexCounter;
+            
+            const offset = document.querySelectorAll('.window').length * 20;
+            win.style.top = (10 + (offset/10)) + '%';
+            win.style.left = (15 + (offset/10)) + '%';
+
+            win.innerHTML = `
+                <div class="title-bar" onmousedown="dragWindow(event, this.parentElement)">
+                    <div class="window-title"><i class="${iconClass}"></i> ${title}</div>
+                    <div class="window-controls">
+                        <div class="control-btn">─</div>
+                        <div class="control-btn">□</div>
+                        <div class="control-btn close" onclick="this.closest('.window').remove()">✕</div>
+                    </div>
+                </div>
+                <div class="window-body">${content}</div>
+            `;
+            
+            desktop.appendChild(win);
+            win.addEventListener('mousedown', () => win.style.zIndex = ++zIndexCounter);
+        }
+
+        // --- 4. APP LAUNCHERS ---
+
+        function openGame(gameKey) {
+            const game = games[gameKey];
+            if (!game) return;
+            
+            // Check if user has uploaded the file or not
+            // We use an iframe. If the file doesn't exist, the iframe will show 404 naturally.
+            const content = `<iframe src="${game.url}"></iframe>`;
+            createWindow(game.title, content, 'fa-solid fa-gamepad');
+        }
+
+        function openBrowser() {
+            // Bing or Wikipedia often allow framing. Google/YouTube do NOT.
+            // Added logic to update iframe src
+            const defaultUrl = "https://www.bing.com"; 
+            const content = `
+                <div class="browser-bar">
+                    <button class="browser-btn" onclick="alert('Back')"><i class="fa-solid fa-arrow-left"></i></button>
+                    <button class="browser-btn" onclick="alert('Reload')"><i class="fa-solid fa-rotate-right"></i></button>
+                    <input type="text" class="browser-input" value="${defaultUrl}" id="urlInput">
+                    <button class="browser-btn" onclick="navigateBrowser(this)">Go</button>
+                </div>
+                <iframe src="${defaultUrl}" id="browserFrame" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+            `;
+            createWindow("Edge Browser", content, 'fa-brands fa-edge');
+        }
+
+        function navigateBrowser(btn) {
+            const input = btn.parentElement.querySelector('input');
+            const iframe = btn.parentElement.nextElementSibling;
+            let url = input.value;
+            if(!url.startsWith('http')) url = 'https://' + url;
+            
+            // Try to load in iframe, but warn user about X-Frame-Options
+            iframe.src = url;
+            
+            // Fallback for blocked sites
+            setTimeout(() => {
+                // We can't detect X-Frame errors easily in JS due to security, 
+                // but we can offer a button to open in new tab if it fails visually.
+            }, 1000);
+        }
+
+        function openSettings() {
+            const content = `
+                <div class="settings-container">
+                    <div class="settings-sidebar">
+                        <h3>Settings</h3>
+                        <p>System</p>
+                        <p><b>Personalization</b></p>
+                        <p>Update</p>
+                    </div>
+                    <div class="settings-content">
+                        <h2 class="settings-header">Background</h2>
+                        <div class="wallpaper-grid">
+                            <div class="wallpaper-option" style="background-image:url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=60')" onclick="setWallpaper('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80')"></div>
+                            <div class="wallpaper-option" style="background-image:url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=60')" onclick="setWallpaper('https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80')"></div>
+                            <div class="wallpaper-option" style="background-image:url('https://images.unsplash.com/photo-1511512578047-dfb367046420?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=60')" onclick="setWallpaper('https://images.unsplash.com/photo-1511512578047-dfb367046420?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80')"></div>
+                        </div>
+
+                        <h2 class="settings-header" style="margin-top:30px;">Colors</h2>
+                        <p>Choose your accent color</p>
+                        <div class="color-grid">
+                            <div class="color-option" style="background:#0078d7;" onclick="setTheme('#0078d7')"></div>
+                            <div class="color-option" style="background:#e81123;" onclick="setTheme('#e81123')"></div>
+                            <div class="color-option" style="background:#107c10;" onclick="setTheme('#107c10')"></div>
+                            <div class="color-option" style="background:#881798;" onclick="setTheme('#881798')"></div>
+                            <div class="color-option" style="background:#ffb900;" onclick="setTheme('#ffb900')"></div>
+                            <div class="color-option" style="background:#555555;" onclick="setTheme('#555555')"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            createWindow("Settings", content, 'fa-solid fa-gear');
+        }
+
+        function setWallpaper(url) {
+            document.body.style.backgroundImage = `url('${url}')`;
+        }
+
+        function setTheme(color) {
+            document.documentElement.style.setProperty('--win-blue', color);
+            // Update Start Button hover effect dynamically if needed, 
+            // but CSS variables handle most of it automatically.
+        }
+
+        // --- 5. DRAG LOGIC ---
+        function dragWindow(e, windowEl) {
+            e.preventDefault();
+            let shiftX = e.clientX - windowEl.getBoundingClientRect().left;
+            let shiftY = e.clientY - windowEl.getBoundingClientRect().top;
+            
+            function moveAt(pageX, pageY) {
+                windowEl.style.left = pageX - shiftX + 'px';
+                windowEl.style.top = pageY - shiftY + 'px';
+            }
+            function onMouseMove(event) { moveAt(event.pageX, event.pageY); }
+            
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', function() {
+                document.removeEventListener('mousemove', onMouseMove);
+            }, { once: true });
+        }
+    </script>
 </body>
 </html>
