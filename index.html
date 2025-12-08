@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows 10 Game Hub</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <div id="lock-screen" onclick="unlockScreen()">
+        <div class="lock-content">
+            <div id="lock-time">12:00</div>
+            <div id="lock-date">Monday, January 1</div>
+            <div class="lock-msg">Click anywhere to enter</div>
+        </div>
+    </div>
+
+    <div class="desktop">
+        <div class="desktop-icon" onclick="openGame('game1')">
+            <i class="fa-solid fa-gamepad"></i>
+            <span>My RPG</span>
+        </div>
+        <div class="desktop-icon" onclick="openGame('game2')">
+            <i class="fa-solid fa-ghost"></i>
+            <span>Horror Sim</span>
+        </div>
+        <div class="desktop-icon" onclick="openWindow('trash')">
+            <i class="fa-solid fa-trash-can"></i>
+            <span>Recycle Bin</span>
+        </div>
+
+        <div id="window-area"></div>
+    </div>
+
+    <div id="start-menu" class="start-menu hidden">
+        <div class="sidebar">
+            <div class="sidebar-btn"><i class="fa-solid fa-user"></i></div>
+            <div class="sidebar-btn"><i class="fa-solid fa-cog"></i></div>
+            <div class="sidebar-btn"><i class="fa-solid fa-power-off"></i></div>
+        </div>
+        <div class="apps-list">
+            <h3>Installed Games</h3>
+            <div class="app-item" onclick="openGame('game1')"><i class="fa-solid fa-gamepad"></i> Super RPG</div>
+            <div class="app-item" onclick="openGame('game2')"><i class="fa-solid fa-ghost"></i> Spooky House</div>
+            <div class="app-item" onclick="openGame('game3')"><i class="fa-solid fa-car"></i> Racer X</div>
+        </div>
+        <div class="tiles-grid">
+            <h3>Play Now</h3>
+            <div class="tile medium color-1" onclick="openGame('game1')">
+                <i class="fa-solid fa-gamepad"></i>
+                <span>Super RPG</span>
+            </div>
+            <div class="tile wide color-2" onclick="openGame('game2')">
+                <i class="fa-solid fa-ghost"></i>
+                <span>Spooky House</span>
+            </div>
+            <div class="tile small color-3" onclick="openGame('game3')">
+                <i class="fa-solid fa-car"></i>
+            </div>
+             <div class="tile small color-4">
+                <i class="fa-brands fa-xbox"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="taskbar">
+        <div class="start-btn" onclick="toggleStartMenu()">
+            <i class="fa-brands fa-windows"></i>
+        </div>
+        <div class="search-bar">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Type here to search</span>
+        </div>
+        <div class="taskbar-icons">
+            </div>
+        <div class="tray">
+            <i class="fa-solid fa-wifi"></i>
+            <i class="fa-solid fa-volume-high"></i>
+            <div class="tray-clock">
+                <div id="tray-time">12:00 PM</div>
+                <div id="tray-date">1/1/2024</div>
+            </div>
+            <div class="notification-bell"><i class="fa-regular fa-comment-dots"></i></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
