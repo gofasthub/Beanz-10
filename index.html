@@ -36,6 +36,36 @@
             transition: background 0.5s;
         }
 
+        /* Wallpaper Text Overlay */
+        #wallpaper-text {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 10vw;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.15);
+            text-transform: uppercase;
+            pointer-events: none;
+            z-index: 0;
+            letter-spacing: 10px;
+        }
+
+        /* --- FAKE BSOD --- */
+        #bsod {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #0078d7;
+            color: white;
+            z-index: 99999;
+            padding: 10% 15%;
+            font-family: 'Segoe UI', sans-serif;
+            cursor: pointer;
+        }
+        #bsod h1 { font-size: 100px; font-weight: normal; margin-bottom: 0; }
+        #bsod p { font-size: 24px; margin-top: 20px; }
+        .qr-code { margin-top: 30px; width: 120px; height: 120px; background: white; }
+
         /* --- LOCK SCREEN --- */
         #lock-screen {
             position: fixed;
@@ -47,7 +77,7 @@
             flex-direction: column;
             justify-content: flex-end;
             padding: 0 0 100px 50px;
-            transition: transform 0.8s cubic-bezier(0.77, 0, 0.175, 1);
+            transition: transform 0.6s cubic-bezier(0.65, 0.05, 0.36, 1);
             cursor: default;
         }
 
@@ -68,6 +98,7 @@
             align-content: flex-start;
             flex-wrap: wrap;
             position: relative;
+            z-index: 1;
         }
 
         .desktop-icon {
@@ -86,6 +117,8 @@
         /* Specific Icon Colors for new apps */
         .desktop-icon .fa-gauge-high { color: #f0c300; }
         .desktop-icon .fa-puzzle-piece { color: #881798; }
+        .desktop-icon .fa-cubes-stacked { color: #50e3c2; }
+        .desktop-icon .fa-skull-crossbones { color: #e81123; }
 
         /* --- WINDOW SYSTEM --- */
         .window {
@@ -97,9 +130,10 @@
             border: 1px solid #0078d7;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             display: flex; flex-direction: column;
-            animation: openWindow 0.2s ease-out;
+            animation: openWindow 0.15s ease-out;
             resize: both; overflow: hidden;
             min-width: 300px; min-height: 200px;
+            z-index: 100;
         }
 
         @keyframes openWindow { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -139,9 +173,18 @@
         .settings-sidebar { width: 200px; background: #f0f0f0; padding: 20px; border-right: 1px solid #ccc; }
         .settings-content { flex-grow: 1; padding: 30px; overflow-y: auto; background: white; }
         .settings-header { font-size: 1.5rem; margin-bottom: 20px; }
-        .wallpaper-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
-        .wallpaper-option { height: 80px; background-size: cover; cursor: pointer; border: 2px solid transparent; }
-        .wallpaper-option:hover { border: 2px solid var(--win-blue); }
+        
+        .wallpaper-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 10px; }
+        .wallpaper-item { text-align: center; }
+        .wallpaper-option { 
+            height: 100px; width: 100%; 
+            background-size: cover; background-position: center;
+            cursor: pointer; border: 3px solid transparent; 
+            transition: 0.2s;
+        }
+        .wallpaper-option:hover { border: 3px solid var(--win-blue); transform: scale(1.02); }
+        .wallpaper-label { font-size: 0.85rem; margin-top: 5px; color: #333; font-weight: bold; }
+
         .color-grid { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
         .color-option { width: 40px; height: 40px; cursor: pointer; border-radius: 50%; }
 
@@ -153,14 +196,20 @@
             background: var(--start-bg);
             backdrop-filter: blur(15px);
             display: flex;
-            transform: translateY(110%);
-            transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+            transform: translateY(100%); /* Start completely off-screen */
+            transition: transform 0.2s ease-out, opacity 0.2s ease-out;
             z-index: 900;
             border-top: 1px solid #333;
             border-right: 1px solid #333;
+            opacity: 0;
+            pointer-events: none;
         }
         
-        .start-menu.active { transform: translateY(0); }
+        .start-menu.active { 
+            transform: translateY(0); 
+            opacity: 1;
+            pointer-events: auto;
+        }
 
         .sidebar {
             width: 48px;
@@ -191,6 +240,7 @@
         .tile.wide { grid-column: span 2; background: #2b2b2b; }
         .tile.gofast { background: #f0c300; }
         .tile.gapp { background: #881798; }
+        .tile.eagler { background: #50e3c2; }
 
 
         /* --- TASKBAR --- */
@@ -234,6 +284,24 @@
 </head>
 <body>
 
+    <!-- 0. BACKGROUND TEXT LAYER -->
+    <div id="wallpaper-text"></div>
+
+    <!-- 0. FAKE BSOD LAYER -->
+    <div id="bsod" onclick="location.reload()">
+        <h1>:(</h1>
+        <p>Your device ran into a problem and needs to restart. We're just collecting some error info, and then we'll restart for you.</p>
+        <p>0% complete</p>
+        <div style="display:flex; align-items:center; margin-top:30px;">
+            <div class="qr-code"></div>
+            <div style="margin-left:20px; font-size:14px;">
+                <p style="margin:0;">For more information about this issue and possible fixes, visit https://www.windows.com/stopcode</p>
+                <p style="margin:10px 0 0 0;">If you call a support person, give them this info:</p>
+                <p style="margin:0;">Stop code: CRITICAL_PROCESS_DIED</p>
+            </div>
+        </div>
+    </div>
+
     <!-- 1. LOCK SCREEN -->
     <div id="lock-screen" onclick="unlockSystem()">
         <div id="lock-time">12:00</div>
@@ -250,6 +318,14 @@
         <div class="desktop-icon" onclick="openGame('g')">
             <i class="fa-solid fa-puzzle-piece"></i>
             <span>G</span>
+        </div>
+        <div class="desktop-icon" onclick="openGame('eagler')">
+            <i class="fa-solid fa-cubes-stacked"></i>
+            <span>Eaglercraft</span>
+        </div>
+        <div class="desktop-icon" onclick="openTyfd()">
+            <i class="fa-solid fa-skull-crossbones"></i>
+            <span>Tyfd Downloader</span>
         </div>
         <div class="desktop-icon" onclick="openBrowser()">
             <i class="fa-brands fa-edge"></i>
@@ -277,8 +353,10 @@
             <p style="margin-top:0; font-weight:bold;">All Apps</p>
             <div class="app-entry" onclick="openBrowser()"><i class="fa-brands fa-edge"></i> Download Center</div>
             <div class="app-entry" onclick="openSettings()"><i class="fa-solid fa-gear"></i> Settings</div>
+            <div class="app-entry" onclick="openTyfd()"><i class="fa-solid fa-skull-crossbones"></i> Tyfd Downloader</div>
             <div class="app-entry" onclick="openGame('gofast')"><i class="fa-solid fa-gauge-high"></i> GoFast</div>
             <div class="app-entry" onclick="openGame('g')"><i class="fa-solid fa-puzzle-piece"></i> G</div>
+            <div class="app-entry" onclick="openGame('eagler')"><i class="fa-solid fa-cubes-stacked"></i> Eaglercraft</div>
         </div>
 
         <div class="tile-grid">
@@ -289,6 +367,10 @@
             <div class="tile gapp" onclick="openGame('g')">
                 <i class="fa-solid fa-puzzle-piece"></i>
                 <span>G</span>
+            </div>
+            <div class="tile eagler" onclick="openGame('eagler')">
+                <i class="fa-solid fa-cubes-stacked"></i>
+                <span>Eaglercraft</span>
             </div>
             <div class="tile" style="background:#0078d7;" onclick="openBrowser()">
                 <i class="fa-solid fa-file-arrow-down"></i>
@@ -311,8 +393,8 @@
             <div class="taskbar-icon" onclick="openBrowser()" title="Download Center">
                 <i class="fa-solid fa-file-arrow-down" style="color: #4dcfff;"></i>
             </div>
-            <div class="taskbar-icon" onclick="alert('File Explorer coming soon!')" title="File Explorer">
-                <i class="fa-solid fa-folder" style="color: #e8b839;"></i>
+            <div class="taskbar-icon" onclick="openTyfd()" title="Tyfd Downloader">
+                <i class="fa-solid fa-skull-crossbones" style="color: #e81123;"></i>
             </div>
             <div class="taskbar-icon" onclick="alert('Store unavailable in demo.')" title="Store">
                 <i class="fa-brands fa-microsoft" style="color: white;"></i>
@@ -347,6 +429,12 @@
                 url: 'https://script.google.com/macros/s/AKfycbybkhZ3GBw8IJ3GJ54Qddl8tRqvQnefsVjrKkqPlO3XfmRkUws4HyNbGa2oR7Hwf1PH/exec', 
                 external: true,
                 icon: 'fa-solid fa-puzzle-piece'
+            },
+            'eagler': {
+                title: 'Eaglercraft',
+                url: 'https://script.google.com/macros/s/AKfycbybkhZ3GBw8IJ3GJ54Qddl8tRqvQnefsVjrKkqPlO3XfmRkUws4HyNbGa2oR7Hwf1PH/exec',
+                external: true,
+                icon: 'fa-solid fa-cubes-stacked'
             }
         };
 
@@ -423,35 +511,101 @@
             
             document.getElementById('start-menu').classList.remove('active');
 
-            if (game.external) {
+            if (game.external && game.url) {
                 // Open external URLs in a new tab/window
                 window.open(game.url, '_blank');
             } else {
-                // For any future internal/local games
-                const content = `<iframe src="${game.url}"></iframe>`;
+                let content;
+                if (game.url) {
+                     content = `<iframe src="${game.url}"></iframe>`;
+                } else {
+                     content = `<div style="padding:20px;">URL not found.</div>`;
+                }
                 createWindow(game.title, content, game.icon || 'fa-solid fa-gamepad');
+            }
+        }
+
+        // --- 5. TYFD DOWNLOADER (FAKE VIRUS) ---
+        function openTyfd() {
+            const content = `
+                <div style="padding: 30px; text-align: center; background: #f0f0f0; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; color: black;">
+                    <i class="fa-solid fa-skull-crossbones" style="font-size: 4rem; color: #e81123; margin-bottom: 20px;"></i>
+                    <h2 style="margin-bottom:10px;">Tyfd Downloader v1.0</h2>
+                    <p style="margin-bottom:30px;">Click the button below to start the high-speed download.</p>
+                    
+                    <button id="virus-btn" onclick="startVirus()" style="background: #e81123; color: white; padding: 15px 40px; border: none; border-radius: 5px; font-size: 1.2rem; cursor: pointer; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                        <i class="fa-solid fa-download"></i> DOWNLOAD
+                    </button>
+                    
+                    <div id="virus-progress" style="display:none; width: 80%; margin-top: 20px;">
+                        <p id="virus-status">Connecting...</p>
+                        <div style="width:100%; height:20px; background:#ccc; border-radius:10px; overflow:hidden;">
+                            <div id="virus-bar" style="width:0%; height:100%; background:#e81123; transition: width 0.1s;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            createWindow("Tyfd Downloader", content, 'fa-solid fa-skull-crossbones');
+        }
+
+        function startVirus() {
+            const btn = document.getElementById('virus-btn');
+            const progress = document.getElementById('virus-progress');
+            const bar = document.getElementById('virus-bar');
+            const status = document.getElementById('virus-status');
+            
+            btn.style.display = 'none';
+            progress.style.display = 'block';
+            
+            let width = 0;
+            const interval = setInterval(() => {
+                if (width >= 100) {
+                    clearInterval(interval);
+                    status.innerText = "Deleting System32...";
+                    setTimeout(triggerBSOD, 800);
+                } else {
+                    width += Math.random() * 5;
+                    bar.style.width = width + '%';
+                    status.innerText = "Downloading payload... " + Math.floor(width) + "%";
+                }
+            }, 50);
+        }
+
+        function triggerBSOD() {
+            // Full screen fake BSOD
+            const bsod = document.getElementById('bsod');
+            bsod.style.display = 'block';
+            
+            // Try to go fullscreen for effect
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(() => {});
             }
         }
 
         function openBrowser() {
             document.getElementById('start-menu').classList.remove('active');
-            const githubRepoUrl = "https://github.com/gofasthub/gofasthub.github.io";
-            // Standard GitHub URL for downloading a repository as a ZIP archive of the main branch
-            const downloadZipUrl = githubRepoUrl + "/archive/refs/heads/main.zip";
+            // This is the working public link for the GitHub repository's ZIP file
+            const downloadZipUrl = "https://github.com/gofasthub/gofasthub.github.io/archive/refs/heads/main.zip";
 
             const content = `
-                <div style="padding: 20px; text-align: center; background: white; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                    <i class="fa-solid fa-cloud-arrow-down" style="font-size: 3rem; color: var(--win-blue); margin-bottom: 20px;"></i>
-                    <h2 style="color: black;">GitHub Repository Download Center</h2>
-                    <p style="color: #555; max-width: 400px; margin-bottom: 30px;">Click the button below to download the latest source code from the GoFast Hub repository as a ZIP file.</p>
+                <div style="padding: 20px; text-align: center; background: white; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px;">
+                    <i class="fa-solid fa-cloud-arrow-down" style="font-size: 3rem; color: var(--win-blue);"></i>
+                    <h2 style="color: black; margin:0;">Download Center</h2>
+                    <p style="color: #555;">Choose a package to download.</p>
                     
-                    <a href="${downloadZipUrl}" target="_blank" style="text-decoration: none;">
-                        <button style="background: var(--win-blue); color: white; padding: 12px 25px; border: none; border-radius: 6px; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: background 0.2s;">
-                            <i class="fa-solid fa-file-zipper" style="margin-right: 10px;"></i> Download ZIP
+                    <!-- BUTTON 1: GitHub Repo -->
+                    <a href="${downloadZipUrl}" target="_blank" style="text-decoration: none; width: 60%;">
+                        <button style="width: 100%; background: var(--win-blue); color: white; padding: 12px 20px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; box-shadow: 0 3px 8px rgba(0,0,0,0.2);">
+                            <i class="fa-brands fa-github" style="margin-right: 10px;"></i> Download Repo (ZIP)
                         </button>
                     </a>
-                    
-                    <p style="margin-top: 25px; font-size: 0.8rem; color: #888;">Repository URL: <a href="${githubRepoUrl}" target="_blank" style="color: var(--win-blue); text-decoration: none;">${githubRepoUrl}</a></p>
+
+                    <!-- BUTTON 2: Download Pack (NOW POINTS TO THE SAME WORKING URL) -->
+                    <a href="${downloadZipUrl}" target="_blank" style="text-decoration: none; width: 60%;">
+                        <button style="width: 100%; background: #107c10; color: white; padding: 12px 20px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; box-shadow: 0 3px 8px rgba(0,0,0,0.2);">
+                            <i class="fa-solid fa-box-archive" style="margin-right: 10px;"></i> Download Pack (Working)
+                        </button>
+                    </a>
                 </div>
             `;
             createWindow("Download Center", content, 'fa-solid fa-file-arrow-down');
@@ -470,20 +624,35 @@
                     <div class="settings-content">
                         <h2 class="settings-header">Background</h2>
                         <div class="wallpaper-grid">
-                            <div class="wallpaper-option" style="background-image:url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=60')" onclick="setWallpaper('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80')"></div>
-                            <div class="wallpaper-option" style="background-image:url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=60')" onclick="setWallpaper('https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80')"></div>
-                            <div class="wallpaper-option" style="background-image:url('https://images.unsplash.com/photo-1511512578047-dfb367046420?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=60')" onclick="setWallpaper('https://images.unsplash.com/photo-1511512578047-dfb367046420?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80')"></div>
+                            <div class="wallpaper-item">
+                                <div class="wallpaper-option" style="background-image:url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=60')" onclick="setWallpaper('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80', 'Default')"></div>
+                                <div class="wallpaper-label">Default</div>
+                            </div>
+                            <div class="wallpaper-item">
+                                <div class="wallpaper-option" style="background-image:url('https://images.unsplash.com/photo-1511512578047-dfb367046420?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=60')" onclick="setWallpaper('https://images.unsplash.com/photo-1511512578047-dfb367046420?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80', 'FRANKIE')"></div>
+                                <div class="wallpaper-label">Frankie</div>
+                            </div>
+                            <div class="wallpaper-item">
+                                <div class="wallpaper-option" style="background-image:url('https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=60')" onclick="setWallpaper('https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80', 'DANIEL')"></div>
+                                <div class="wallpaper-label">Daniel</div>
+                            </div>
+                            <div class="wallpaper-item">
+                                <div class="wallpaper-option" style="background-image:url('https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=60')" onclick="setWallpaper('https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80', 'THOMAS')"></div>
+                                <div class="wallpaper-label">Thomas</div>
+                            </div>
+                             <div class="wallpaper-item">
+                                <div class="wallpaper-option" style="background-image:url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=60')" onclick="setWallpaper('https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80', 'YASH')"></div>
+                                <div class="wallpaper-label">Yash</div>
+                            </div>
                         </div>
 
                         <h2 class="settings-header" style="margin-top:30px;">Colors</h2>
-                        <p>Choose your accent color</p>
                         <div class="color-grid">
                             <div class="color-option" style="background:#0078d7;" onclick="setTheme('#0078d7')"></div>
                             <div class="color-option" style="background:#e81123;" onclick="setTheme('#e81123')"></div>
                             <div class="color-option" style="background:#107c10;" onclick="setTheme('#107c10')"></div>
                             <div class="color-option" style="background:#881798;" onclick="setTheme('#881798')"></div>
                             <div class="color-option" style="background:#ffb900;" onclick="setTheme('#ffb900')"></div>
-                            <div class="color-option" style="background:#555555;" onclick="setTheme('#555555')"></div>
                         </div>
                     </div>
                 </div>
@@ -491,14 +660,15 @@
             createWindow("Settings", content, 'fa-solid fa-gear');
         }
 
-
-        function setWallpaper(url) {
+        // Updated function to handle Name Overlay
+        function setWallpaper(url, name = "") {
             document.body.style.backgroundImage = `url('${url}')`;
+            // Set text content, clear if "Default"
+            document.getElementById('wallpaper-text').innerText = name === 'Default' ? '' : name;
         }
 
         function setTheme(color) {
             document.documentElement.style.setProperty('--win-blue', color);
-            // This relies on CSS variables updating colors for buttons and highlights
         }
 
         // --- 5. DRAG LOGIC ---
